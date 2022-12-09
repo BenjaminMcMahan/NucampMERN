@@ -14,6 +14,7 @@ app.use((
     // Middleware
     req, res
 ) => {
+    // This will be a fallback if the file cannot be found
     res.statusCode = 200;
     res.setHeader('Content-Type', 'text/html');
     res.end('<html lang="en"><body><h1>This is an Express Server</h1></body></html>');
