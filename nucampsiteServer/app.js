@@ -11,7 +11,7 @@ const campsiteRouter = require('./routes/campsiteRouter');
 const promotionRouter = require('./routes/promotionRouter');
 const partnerRouter = require('./routes/partnerRouter');
 
-const url = "mongodb://localhost:27017/nucampsite";
+const url = "mongodb://127.0.0.1:27017/nucampsite"; // Recent updates, localhost does not work
 const connect = mongoose.connect(url, {
     useCreateIndex: true,
     useFindAndModify: false,
@@ -32,27 +32,40 @@ app.set('view engine', 'jade');
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({extended: false}));
-app.use(cookieParser());
-function auth(req, res, next) {
-    console.log(req.headers);
-    const authHeader = req.headers.authorization;
-    if (!authHeader) {
-        const err = new Error('You are not authenticated!');
-        res.setHeader('WWW-Authenticate', 'Basic');
-        err.status = 401;
-        return next(err);
-    }
+app.use(cookieParser('Ophelia821234-88882'));
 
-    const auth = Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(':');
-    const user = auth[0];
-    const pass = auth[1];
-    if (user === 'admin' && pass === 'password') {
-        return next(); // authorized
+function auth(req, res, next) {
+    if (!req.signedCookies.user) {
+        // False if the cookies is not assigned
+        const authHeader = req.headers.authorization;
+        if (!authHeader) {
+            const err = new Error('You are not authenticated!');
+            res.setHeader('WWW-Authenticate', 'Basic');
+            err.status = 401;
+            return next(err);
+        }
+
+        const auth = Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(':');
+        const user = auth[0];
+        const pass = auth[1];
+        if (user === 'admin' && pass === 'password') {
+            res.cookie('user', 'admin', {signed: true}); // Set the cookie for auth. Signed will use the secret key
+            return next(); // authorized
+        } else {
+            const err = new Error('You are not authenticated!');
+            res.setHeader('WWW-Authenticate', 'Basic');
+            err.status = 401;
+            return next(err);
+        }
     } else {
-        const err = new Error('You are not authenticated!');
-        res.setHeader('WWW-Authenticate', 'Basic');
-        err.status = 401;
-        return next(err);
+        // Signed cookie value
+        if (req.signedCookies.user === 'admin') {
+            return next();
+        } else {
+            const err = new Error('You are not authenticated!');
+            err.status = 401;
+            return next(err);
+        }
     }
 }
 
