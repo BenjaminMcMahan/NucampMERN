@@ -3,6 +3,8 @@ let express = require('express');
 let path = require('path');
 let cookieParser = require('cookie-parser');
 let logger = require('morgan');
+const session = require('express-session');
+const FileStore = require('session-file-store')(session); // TODO review first class functions
 const mongoose = require('mongoose');
 
 let indexRouter = require('./routes/index');
@@ -32,10 +34,18 @@ app.set('view engine', 'jade');
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({extended: false}));
-app.use(cookieParser('Ophelia821234-88882'));
+// app.use(cookieParser('Ophelia821234-88882'));
+app.use(session({
+    name: 'session-id',
+    secret: 'ophelia-82-89-339922-1583',
+    saveUninitialized: false,
+    resave: false,
+    store: new FileStore()
+}));
 
 function auth(req, res, next) {
-    if (!req.signedCookies.user) {
+    if (!req.session.user) {
+        console.log(req.session); // Log the current session details
         // False if the cookies is not assigned
         const authHeader = req.headers.authorization;
         if (!authHeader) {
@@ -49,7 +59,7 @@ function auth(req, res, next) {
         const user = auth[0];
         const pass = auth[1];
         if (user === 'admin' && pass === 'password') {
-            res.cookie('user', 'admin', {signed: true}); // Set the cookie for auth. Signed will use the secret key
+            req.session.user = 'admin'; // Store a new session variable named user with the value of admin
             return next(); // authorized
         } else {
             const err = new Error('You are not authenticated!');
@@ -59,7 +69,7 @@ function auth(req, res, next) {
         }
     } else {
         // Signed cookie value
-        if (req.signedCookies.user === 'admin') {
+        if (req.session.user === 'admin') {
             return next();
         } else {
             const err = new Error('You are not authenticated!');
