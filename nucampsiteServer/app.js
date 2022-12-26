@@ -1,10 +1,11 @@
 let createError = require('http-errors');
 let express = require('express');
 let path = require('path');
-let cookieParser = require('cookie-parser');
 let logger = require('morgan');
 const session = require('express-session');
 const FileStore = require('session-file-store')(session); // TODO review first class functions
+const passport = require('passport');
+const authenticate = require('./authenticate');
 const mongoose = require('mongoose');
 
 let indexRouter = require('./routes/index');
@@ -34,7 +35,6 @@ app.set('view engine', 'jade');
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({extended: false}));
-// app.use(cookieParser('Ophelia821234-88882'));
 app.use(session({
     name: 'session-id',
     secret: 'ophelia-82-89-339922-1583',
@@ -43,25 +43,24 @@ app.use(session({
     store: new FileStore()
 }));
 
+// Auth
+app.use(passport.initialize());
+app.use(passport.session());
+
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 
 function auth(req, res, next) {
-    if (!req.session.user) {
+    console.log(req.user);
+
+    if (!req.user) {
         console.log(req.session); // Log the current session details
         // False if the cookies is not assigned
         const err = new Error('You are not authenticated!');
         err.status = 401;
         return next(err);
     } else {
-        // Signed cookie value
-        if (req.session.user === 'authenticated') {
-            return next();
-        } else {
-            const err = new Error('You are not authenticated!');
-            err.status = 401;
-            return next(err);
-        }
+       return next(); // Pass to next middleware
     }
 }
 
