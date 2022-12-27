@@ -5,3 +5,5 @@ nucampsiteServer/node_modules
 /mongodb/
 /node_modules/
 /nucampsiteServer/sessions/
+/nucampsiteServer/bin/server.cert
+/nucampsiteServer/bin/server.key
