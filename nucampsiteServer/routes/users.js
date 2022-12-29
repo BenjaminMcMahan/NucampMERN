@@ -2,13 +2,14 @@ const express = require('express');
 const User = require('../models/user');
 const passport = require('passport');
 const authenticate = require('../authenticate');
+const cors = require('./cors');
 
 const router = express.Router();
 
 /* GET users listing. */
 router.route('/')
     // This task was either incredibly poorly written or I miss something in a previous exercise. See previous commit.
-    .get(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+    .get(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
         User.find()
             .then(users => {
                 res.statusCode = 200;
@@ -18,7 +19,7 @@ router.route('/')
             .catch(err => next(err));
     });
 
-router.post('/signup', (req, res) => {
+router.post('/signup', cors.corsWithOptions, (req, res) => {
     User.register(
         new User({username: req.body.username}),
         req.body.password,
@@ -51,10 +52,10 @@ router.post('/signup', (req, res) => {
                 });
             }
         }
-    )
+    );
 });
 
-router.post('/login', passport.authenticate('local'), (req, res) => {
+router.post('/login', cors.corsWithOptions, passport.authenticate('local'), (req, res) => {
     // Login Successful, send a response
     const token = authenticate.getToken({_id: req.user.id});
     res.statusCode = 200;
@@ -62,7 +63,7 @@ router.post('/login', passport.authenticate('local'), (req, res) => {
     res.json({success: true, token, status: "You are successfully logged in!"});
 });
 
-router.get('/logout', (req, res, next) => {
+router.get('/logout', cors.corsWithOptions, (req, res, next) => {
     if (req.session) {
         // A session exists. Delete it
         req.session.destroy();
@@ -74,6 +75,6 @@ router.get('/logout', (req, res, next) => {
         err.status = 401;
         return next(err);
     }
-})
+});
 
 module.exports = router;
