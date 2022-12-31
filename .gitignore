@@ -7,3 +7,4 @@ nucampsiteServer/node_modules
 /nucampsiteServer/sessions/
 /nucampsiteServer/bin/server.cert
 /nucampsiteServer/bin/server.key
+/nucampsiteServer/config.js
