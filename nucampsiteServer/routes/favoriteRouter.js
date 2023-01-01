@@ -53,7 +53,7 @@ favoriteRouter.route('/')
             })
             .catch(err => next(err));
     })
-    .put(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
+    .put(cors.corsWithOptions, authenticate.verifyUser, (req, res) => {
         res.statusCode = 403;
         res.end(`POST operation not supported on /favorites/${req.params.campsiteId}`);
     })
@@ -91,7 +91,11 @@ favoriteRouter.route('/:campsiteId')
                     Favorite.findOne({user: req.user._id})
                         .then(favorite => {
                             if (!favorite) {
-                                // No existing Favorite document, let's build one..
+                                /*
+                                 No existing Favorite document, let's build one..
+                                 Iterating over an empty Favorite.campsites array to see if a Campsite already exists
+                                 seems very unnecessary here.
+                                 */
                                 Favorite.create({
                                     user: req.user._id,
                                     campsites: [req.params.campsiteId] // Array with the passed campsiteId
@@ -131,8 +135,7 @@ favoriteRouter.route('/:campsiteId')
         Favorite.findOne({user: req.user._id})
             .then(favorite => {
                 if (favorite) {
-                    const indexOfCampsite = favorite.campsites.indexOf(req.params.campsiteId);
-                    favorite.campsites = favorite.campsites.splice(indexOfCampsite, 1);
+                    favorite.campsites.splice(favorite.campsites.indexOf(req.params.campsiteId), 1);
                     favorite.save()
                         .then(favorite => {
                             res.statusCode = 200;
